@@ -4,6 +4,7 @@ import { useWallet } from '@/lib/hooks/useWallet'
 import { useRewards } from '@/lib/hooks/useRewards'
 import { ClaimButton } from './ClaimButton'
 import { TransactionStatus } from './TransactionStatus'
+import { useEffect, useState } from 'react'
 
 export function RewardPanel() {
   const { address } = useWallet()
@@ -19,8 +20,13 @@ export function RewardPanel() {
     refresh,
   } = useRewards(address)
 
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
   const pendingReward = rewards?.pendingRewards[0]
-  const loading = isLoading && !balance // only show full loading state on first load
+  const loading = isLoading && !balance
+
+  if (!mounted) return null
 
   return (
     <div className="space-y-4">

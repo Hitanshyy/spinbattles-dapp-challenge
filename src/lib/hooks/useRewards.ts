@@ -63,9 +63,9 @@ export function useRewards(address: string | undefined) {
         const txHash = await submitClaimTransaction(address, reward.id)
         setState((s) => ({ ...s, txHash }))
 
-        await postClaimReward({ address, rewardId: reward.id, txHash })
-        setState((s) => ({ ...s, txStatus: 'confirmed' }))
-
+        // FIX: wait for on-chain confirmation BEFORE updating backend
+        // Original bug: postClaimReward and 'confirmed' state were set before
+        // waitForConfirmation — so failed transactions were incorrectly marked as claimed
         const confirmationResult = await waitForConfirmation(txHash)
         if (confirmationResult === 'failed') {
           setState((s) => ({
@@ -76,6 +76,9 @@ export function useRewards(address: string | undefined) {
           return
         }
 
+        // Only notify backend after confirmed on-chain
+        await postClaimReward({ address, rewardId: reward.id, txHash })
+        setState((s) => ({ ...s, txStatus: 'confirmed' }))
         await refresh()
       } catch (err) {
         setState((s) => ({
